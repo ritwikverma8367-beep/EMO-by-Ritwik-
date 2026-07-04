@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>EMO AI ROBOT v3.0 - Ritwik Verma</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --cyan:#2de1fc;--cyan2:#00b8d4;--green:#00ff88;
+  --bg:#000;--panel:#020c16;--panelborder:rgba(45,225,252,0.25);
+  --text:#e0f8ff;--dim:#1a3040;--muted:#2a4a60;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:'Orbitron',monospace;font-size:11px;}
+
+/* ===================== LAYOUT ===================== */
+#app{display:flex;flex-direction:column;width:100vw;height:100vh;overflow:hidden;}
+
+/* Header */
+#hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 14px;flex-shrink:0;
+  border-bottom:1px solid rgba(45,225,252,0.15);
+  background:linear-gradient(180deg,rgba(0,20,35,0.9) 0%,transparent 100%);
+}
+#hdrTitle{font-size:16px;font-weight:900;letter-spacing:0.14em;color:var(--cyan);
+  text-shadow:0 0 20px var(--cyan),0 0 40px rgba(45,225,252,0.4);}
+#hdrTitle span{font-size:11px;color:var(--cyan2);}
+#waveBar{flex:1;margin:0 16px;height:38px;position:relative;}
+#waveStatus{position:absolute;top:0;left:50%;transform:translateX(-50%);
+  font-size:9px;letter-spacing:0.18em;color:var(--cyan);margin-bottom:2px;}
+#waveC{display:block;width:100%;height:26px;margin-top:10px;}
+#hdrRight{text-align:right;font-size:8px;color:var(--muted);letter-spacing:0.08em;}
+
+/* Main 3-column grid */
+#main{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+/* Panels */
+.panel{
+  position:relative;background:rgba(2,12,22,0.9);
+  border:1px solid var(--panelborder);border-radius:6px;
+  padding:8px;margin:4px;overflow:hidden;
+}
+.panel::before,.panel::after,
+.panel .c2::before,.panel .c2::after{
+  content:'';position:absolute;width:10px;height:10px;border-color:var(--cyan);border-style:solid;
+}
+.panel::before{top:-1px;left:-1px;border-width:2px 0 0 2px;}
+.panel::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0;}
+.panel .c2::before{top:-1px;right:-1px;border-width:2px 2px 0 0;}
+.panel .c2::after{bottom:-1px;left:-1px;border-width:0 0 2px 2px;}
+.pTitle{font-size:8px;letter-spacing:0.16em;color:var(--cyan);border-bottom:1px solid rgba(45,225,252,0.2);
+  padding-bottom:5px;margin-bottom:7px;display:flex;align-items:center;gap:5px;}
+.pTitle::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--cyan);}
+
+/* LEFT PANEL */
+#leftCol{width:175px;flex-shrink:0;display:flex;flex-direction:column;padding:4px 0 4px 4px;overflow-y:auto;scrollbar-width:none;}
+#leftCol::-webkit-scrollbar{display:none;}
+.statusItem{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:8px;letter-spacing:0.06em;}
+.statusItem .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot.on{background:var(--green);box-shadow:0 0 6px var(--green);}
+.dot.off{background:#444;}
+.dot.warn{background:#ffbb00;box-shadow:0 0 6px #ffbb00;}
+#moodWave{height:28px;width:100%;margin-top:5px;}
+#motionInfo{font-size:8px;color:var(--muted);line-height:1.5;margin-top:4px;}
+#motionIcon{font-size:18px;display:block;text-align:center;margin:4px 0;animation:eyeScan 2s infinite ease-in-out;}
+@keyframes eyeScan{0%,100%{transform:translateX(-6px);}50%{transform:translateX(6px);}}
+#moodLabel{font-size:13px;color:var(--cyan);letter-spacing:0.1em;margin:4px 0;}
+
+/* CENTER */
+#centerCol{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.tabContent{display:none;flex:1;flex-direction:column;overflow:hidden;align-items:center;justify-content:center;}
+.tabContent.active{display:flex;}
+
+/* Eye stage */
+#eyeStage{position:relative;flex:1;width:100%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 45%,#030d18 0%,#000 70%);}
+#eyeC{display:block;max-width:100%;max-height:100%;}
+#fxC{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+/* EMO speech overlay */
+#speechOverlay{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  background:rgba(0,15,30,0.92);border:1px solid rgba(45,225,252,0.3);
+  border-radius:10px;padding:8px 14px;
+  font-size:11px;color:var(--text);text-align:center;max-width:90%;
+  opacity:0;transition:opacity 0.3s;letter-spacing:0.04em;line-height:1.4;
+  pointer-events:none;
+}
+#userSpeech{
+  position:absolute;top:6px;left:50%;transform:translateX(-50%);
+  font-size:9px;color:rgba(200,240,255,0.5);letter-spacing:0.05em;
+  opacity:0;transition:opacity 0.2s;pointer-events:none;
+}
+#powerLabel{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:16px;font-weight:900;letter-spacing:0.2em;
+  opacity:0;transition:opacity 0.2s;pointer-events:none;
+  text-shadow:0 0 20px currentColor;
+}
+
+/* RIGHT PANEL */
+#rightCol{width:175px;flex-shrink:0;display:flex;flex-direction:column;padding:4px 4px 4px 0;overflow-y:auto;scrollbar-width:none;}
+#rightCol::-webkit-scrollbar{display:none;}
+#personFrame{
+  width:80px;height:60px;border:1px solid var(--panelborder);margin:4px auto;
+  display:flex;align-items:center;justify-content:center;position:relative;border-radius:4px;
+}
+#personFrame::before,#personFrame::after{
+  content:'';position:absolute;width:8px;height:8px;border-color:var(--cyan);border-style:solid;
+}
+#personFrame::before{top:-1px;left:-1px;border-width:2px 0 0 2px;}
+#personFrame::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0;}
+#personIcon{font-size:26px;color:rgba(45,225,252,0.4);}
+#detectLabel{text-align:center;font-size:8px;color:var(--cyan);margin-top:2px;letter-spacing:0.08em;}
+#detectSub{text-align:center;font-size:7px;color:var(--muted);margin-top:2px;letter-spacing:0.05em;}
+.eyeBehaviorRow{display:flex;align-items:center;gap:4px;justify-content:center;margin:4px 0;}
+.eyeThumb{width:22px;height:18px;background:var(--cyan);border-radius:4px;opacity:0.7;}
+.eyeArrow{font-size:10px;color:var(--cyan);}
+#behaviorLabel{text-align:center;font-size:8px;color:var(--cyan);letter-spacing:0.08em;}
+#behaviorSub{text-align:center;font-size:7px;color:var(--muted);margin-top:1px;letter-spacing:0.04em;line-height:1.4;}
+.voiceCmd{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(45,225,252,0.07);}
+.vcIcon{width:18px;height:18px;border-radius:50%;background:rgba(45,225,252,0.15);
+  display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;}
+.vcText{flex:1;}
+.vcName{font-size:8px;color:var(--cyan);letter-spacing:0.05em;}
+.vcDesc{font-size:7px;color:var(--muted);letter-spacing:0.04em;}
+#moreCmd{text-align:center;font-size:8px;color:var(--cyan2);margin-top:4px;letter-spacing:0.08em;cursor:pointer;}
+
+/* BOTTOM BAR */
+#bottomBar{
+  flex-shrink:0;display:flex;align-items:center;
+  border-top:1px solid rgba(45,225,252,0.2);
+  background:rgba(0,10,20,0.95);padding:6px 10px;gap:8px;
+}
+.barSection{
+  flex:1;border:1px solid rgba(45,225,252,0.2);border-radius:5px;
+  padding:6px 10px;text-align:center;position:relative;
+  background:rgba(2,15,28,0.8);
+}
+.barSection::before,.barSection::after{
+  content:'';position:absolute;width:7px;height:7px;border-color:var(--cyan);border-style:solid;
+}
+.barSection::before{top:-1px;left:-1px;border-width:1px 0 0 1px;}
+.barSection::after{bottom:-1px;right:-1px;border-width:0 1px 1px 0;}
+.barLabel{font-size:7px;letter-spacing:0.14em;color:var(--muted);}
+.barValue{font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--cyan);margin:2px 0;}
+.barSub{font-size:7px;color:var(--muted);letter-spacing:0.08em;}
+#micSection{
+  width:64px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+#micRing{
+  width:48px;height:48px;border-radius:50%;
+  border:2px solid var(--cyan);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 12px rgba(45,225,252,0.4);
+  background:radial-gradient(circle,rgba(45,225,252,0.1) 0%,transparent 70%);
+  position:relative;
+}
+#micRing::before{
+  content:'';position:absolute;inset:-5px;border-radius:50%;
+  border:1px solid rgba(45,225,252,0.2);
+  animation:micPulse 2s infinite;
+}
+@keyframes micPulse{0%,100%{transform:scale(1);opacity:0.5;}50%{transform:scale(1.1);opacity:1;}}
+#micIcon{font-size:20px;color:var(--cyan);}
+#micLabel{font-size:7px;color:var(--muted);letter-spacing:0.06em;}
+
+/* TAB BAR */
+#tabBar{
+  flex-shrink:0;display:flex;
+  border-top:1px solid rgba(45,225,252,0.2);
+  background:rgba(0,8,18,0.98);padding:4px;gap:4px;
+}
+.tabBtn{
+  flex:1;padding:7px 4px;border:1px solid rgba(45,225,252,0.2);
+  background:rgba(2,12,22,0.8);border-radius:5px;
+  color:var(--muted);font-family:'Orbitron',monospace;font-size:7px;
+  letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.tabBtn .ticon{font-size:14px;}
+.tabBtn:active{transform:scale(0.95);}
+.tabBtn.active{color:var(--cyan);border-color:var(--cyan);
+  background:rgba(45,225,252,0.08);
+  box-shadow:0 0 10px rgba(45,225,252,0.2);}
+
+/* FOOTER */
+#footer{
+  text-align:center;font-size:8px;letter-spacing:0.1em;color:rgba(45,225,252,0.4);
+  padding:3px 0;flex-shrink:0;
+  border-top:1px solid rgba(45,225,252,0.08);
+}
+
+/* ===================== STUDY TAB ===================== */
+#studyContent{padding:10px;width:100%;overflow-y:auto;scrollbar-width:none;}
+.studyGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+.studyCard{
+  background:rgba(2,12,22,0.9);border:1px solid var(--panelborder);
+  border-radius:8px;padding:0;cursor:pointer;overflow:hidden;text-align:center;
+  transition:all 0.2s;
+}
+.studyCard:active{transform:scale(0.97);}
+.studyCard.active{border-color:var(--cyan);box-shadow:0 0 12px rgba(45,225,252,0.3);}
+.studyCard canvas{display:block;width:100%;height:70px;}
+.studyCard .sLabel{font-size:7px;letter-spacing:0.08em;color:var(--cyan2);padding:4px 0 5px;}
+#studyInfo{
+  background:rgba(0,15,28,0.9);border:1px solid rgba(45,225,252,0.15);
+  border-radius:8px;padding:10px;min-height:60px;
+  font-size:10px;color:var(--text);line-height:1.6;letter-spacing:0.04em;
+}
+
+/* ===================== POWER TAB ===================== */
+#powerContent{padding:8px;width:100%;display:flex;flex-direction:column;gap:8px;overflow-y:auto;}
+#handStage{
+  position:relative;border-radius:10px;overflow:hidden;
+  background:#000;border:1px solid rgba(255,143,208,0.3);
+  aspect-ratio:4/3;max-height:200px;
+}
+#handVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+#handOvC{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);}
+#handLabel{text-align:center;font-size:10px;letter-spacing:0.1em;color:var(--cyan);min-height:16px;}
+.pwrGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.pwrCard{
+  background:rgba(2,12,22,0.9);border:1px solid rgba(255,255,255,0.07);
+  border-radius:8px;padding:6px 4px;text-align:center;
+}
+.pwrCard .pci{font-size:16px;line-height:1.2;}
+.pwrCard .pcn{font-size:6px;letter-spacing:0.06em;color:var(--muted);margin-top:2px;}
+
+/* ===================== CHAT TAB ===================== */
+#chatContent{display:flex;flex-direction:column;width:100%;overflow:hidden;}
+#chatLog{
+  flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:6px;
+  scrollbar-width:thin;
+}
+#chatLog::-webkit-scrollbar{width:3px;}
+#chatLog::-webkit-scrollbar-thumb{background:rgba(45,225,252,0.2);}
+.bubble{max-width:80%;font-size:11px;line-height:1.4;padding:8px 11px;border-radius:12px;}
+.bubble.emo{align-self:flex-start;background:rgba(45,225,252,0.08);border:1px solid rgba(45,225,252,0.2);color:var(--text);}
+.bubble.user{align-self:flex-end;background:rgba(91,141,239,0.18);border:1px solid rgba(91,141,239,0.3);color:#dce8ff;}
+.bubble.sys{align-self:center;color:var(--muted);background:none;border:none;font-size:9px;text-align:center;}
+#chatInputRow{display:flex;gap:6px;padding:8px;flex-shrink:0;}
+#chatInput{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(45,225,252,0.2);
+  border-radius:8px;color:var(--text);padding:8px 10px;font-size:11px;font-family:'Orbitron',monospace;}
+#chatInput:focus{outline:none;border-color:rgba(45,225,252,0.5);}
+#chatSend{background:rgba(45,225,252,0.12);border:1px solid rgba(45,225,252,0.3);
+  color:var(--cyan);border-radius:8px;padding:0 12px;font-size:14px;cursor:pointer;}
+
+/* ===================== GAMES TAB ===================== */
+#gamesContent{padding:8px;overflow-y:auto;width:100%;display:flex;flex-direction:column;gap:8px;}
+.gameSection{background:rgba(2,12,22,0.9);border:1px solid var(--panelborder);border-radius:10px;padding:10px;}
+.gTitle{font-size:8px;letter-spacing:0.14em;color:var(--cyan);margin-bottom:8px;text-align:center;}
+.rpsRow{display:flex;gap:8px;justify-content:center;}
+.rpsBtn{
+  width:64px;height:64px;font-size:28px;border-radius:12px;
+  border:1px solid rgba(45,225,252,0.25);background:rgba(45,225,252,0.06);
+  cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;
+}
+.rpsBtn:active{transform:scale(0.9);background:rgba(45,225,252,0.2);}
+#rpsRes{text-align:center;font-size:10px;color:var(--cyan);margin-top:8px;min-height:16px;letter-spacing:0.06em;}
+#tttSt{text-align:center;font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:0.06em;}
+.tttGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:170px;margin:0 auto 8px;}
+.tttCell{
+  aspect-ratio:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+  border-radius:9px;font-size:22px;font-weight:900;color:var(--cyan);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.tttCell.o{color:#ff8fd0;}
+.tttCell:active{background:rgba(45,225,252,0.1);}
+.gReset{width:100%;padding:7px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);
+  background:none;color:var(--muted);font-size:9px;font-family:'Orbitron',monospace;cursor:pointer;
+  letter-spacing:0.06em;margin-top:4px;}
+.voiceHint{
+  background:rgba(45,225,252,0.04);border:1px solid rgba(45,225,252,0.1);
+  border-radius:10px;padding:9px 11px;font-size:9px;color:var(--muted);
+  line-height:1.7;letter-spacing:0.04em;text-align:center;
+}
+.voiceHint b{color:var(--cyan);}
+
+/* ===================== SETTINGS TAB ===================== */
+#settingsContent{padding:12px;overflow-y:auto;width:100%;display:flex;flex-direction:column;gap:8px;}
+.settRow{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(2,12,22,0.9);border:1px solid rgba(45,225,252,0.15);
+  border-radius:8px;padding:10px 12px;
+}
+.settLabel{font-size:9px;letter-spacing:0.08em;color:var(--text);}
+.settVal{font-size:9px;color:var(--cyan);letter-spacing:0.08em;}
+.settNote{font-size:8px;color:var(--muted);line-height:1.6;letter-spacing:0.04em;
+  background:rgba(2,12,22,0.9);border:1px solid rgba(45,225,252,0.1);
+  border-radius:8px;padding:10px 12px;}
+.settNote b{color:var(--cyan);}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width:640px){
+  #leftCol{width:120px;}
+  #rightCol{width:120px;}
+  #hdrTitle{font-size:12px;}
+  #tabBar .tabBtn span.tname{display:none;}
+}
+@media (max-width:480px){
+  #leftCol,#rightCol{display:none;}
+}
+/* scanline overlay */
+#app::after{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+  z-index:9999;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="hdr">
+    <div>
+      <div id="hdrTitle">EMO AI ROBOT <span>v3.0</span></div>
+    </div>
+    <div id="waveBar">
+      <div id="waveStatus">I'M LISTENING...</div>
+      <canvas id="waveC" height="26"></canvas>
+    </div>
+    <div id="hdrRight">
+      <div style="font-size:8px;color:var(--muted)" id="timeDisp"></div>
+    </div>
+  </div>
+
+  <!-- MAIN 3 COLUMNS -->
+  <div id="main">
+
+    <!-- LEFT PANEL -->
+    <div id="leftCol">
+      <div class="panel">
+        <div class="c2"></div>
+        <div class="pTitle">STATUS</div>
+        <div class="statusItem"><div class="dot on" id="dSystem"></div><span>SYSTEM ONLINE</span></div>
+        <div class="statusItem"><div class="dot warn" id="dCamera"></div><span>CAMERA ACTIVE</span></div>
+        <div class="statusItem"><div class="dot warn" id="dMic"></div><span>MICROPHONE ACTIVE</span></div>
+        <div class="statusItem"><div class="dot on"></div><span>WAKE WORD: HEY EMO</span></div>
+        <div class="statusItem"><div class="dot on"></div><span>AI BRAIN: CLAUDE</span></div>
+        <div class="statusItem"><div class="dot on" id="dNet"></div><span>INTERNET: CONNECTED</span></div>
+      </div>
+      <div class="panel">
+        <div class="c2"></div>
+        <div class="pTitle">EMO MOTION</div>
+        <div id="motionIcon">&#128065;</div>
+        <div style="font-size:8px;color:var(--cyan);text-align:center;letter-spacing:0.08em;">EYE MOVEMENT</div>
+        <div style="font-size:8px;color:var(--cyan);text-align:center;letter-spacing:0.08em;" id="eyeModeLabel">AUTO SCAN MODE</div>
+        <div id="motionInfo" style="font-size:7px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.6;" id="faceInfo">
+          No person detected<br>Scanning...
+        </div>
+      </div>
+      <div class="panel">
+        <div class="c2"></div>
+        <div class="pTitle">EMO MOOD</div>
+        <div style="font-size:11px;color:var(--cyan);letter-spacing:0.1em;text-align:center;" id="moodLabel">NEUTRAL</div>
+        <canvas id="moodWave" height="28"></canvas>
+      </div>
+    </div>
+
+    <!-- CENTER COLUMN -->
+    <div id="centerCol">
+
+      <!-- HOME -->
+      <div class="tabContent active" id="homeContent">
+        <div id="eyeStage">
+          <canvas id="eyeC"></canvas>
+          <canvas id="fxC"></canvas>
+          <div id="speechOverlay"></div>
+          <div id="userSpeech"></div>
+          <div id="powerLabel"></div>
+        </div>
+      </div>
+
+      <!-- STUDY -->
+      <div class="tabContent" id="studyContent">
+        <div class="studyGrid">
+          <div class="studyCard" id="scard-solar" onclick="studyTopic('solar')">
+            <canvas id="hc-solar" height="70"></canvas>
+            <div class="sLabel">SOLAR SYSTEM</div>
+          </div>
+          <div class="studyCard" id="scard-dna" onclick="studyTopic('dna')">
+            <canvas id="hc-dna" height="70"></canvas>
+            <div class="sLabel">DNA HELIX</div>
+          </div>
+          <div class="studyCard" id="scard-molecule" onclick="studyTopic('molecule')">
+            <canvas id="hc-molecule" height="70"></canvas>
+            <div class="sLabel">MOLECULE</div>
+          </div>
+          <div class="studyCard" id="scard-globe" onclick="studyTopic('globe')">
+            <canvas id="hc-globe" height="70"></canvas>
+            <div class="sLabel">EARTH GLOBE</div>
+          </div>
+          <div class="studyCard" id="scard-atom" onclick="studyTopic('atom')">
+            <canvas id="hc-atom" height="70"></canvas>
+            <div class="sLabel">ATOM</div>
+          </div>
+          <div class="studyCard" id="scard-heart" onclick="studyTopic('heart')">
+            <canvas id="hc-heart" height="70"></canvas>
+            <div class="sLabel">HEART</div>
+          </div>
+        </div>
+        <div id="studyInfo">Tap a hologram above - EMO will explain it with voice!</div>
+      </div>
+
+      <!-- SUPERPOWERS -->
+      <div class="tabContent" id="powerContent">
+        <div id="handStage">
+          <video id="handVideo" autoplay playsinline muted></video>
+          <canvas id="handOvC"></canvas>
+        </div>
+        <div id="handLabel">Show EMO your hand gesture...</div>
+        <div class="pwrGrid">
+          <div class="pwrCard"><div class="pci">&#9994;</div><div class="pcn">SHIELD</div></div>
+          <div class="pwrCard"><div class="pci">&#9995;</div><div class="pcn">ENERGY</div></div>
+          <div class="pwrCard"><div class="pci">&#9996;</div><div class="pcn">PEACE</div></div>
+          <div class="pwrCard"><div class="pci">&#128077;</div><div class="pcn">PRIDE</div></div>
+          <div class="pwrCard"><div class="pci">&#128076;</div><div class="pcn">POINT</div></div>
+          <div class="pwrCard"><div class="pci">&#129304;</div><div class="pcn">ROCK ON</div></div>
+          <div class="pwrCard"><div class="pci">&#129305;</div><div class="pcn">SHAKA</div></div>
+          <div class="pwrCard"><div class="pci">&#128400;+&#128400;</div><div class="pcn">MEGA</div></div>
+        </div>
+      </div>
+
+      <!-- AI CHAT -->
+      <div class="tabContent" id="chatContent">
+        <div id="chatLog">
+          <div class="bubble sys">Voice activated - say Hey EMO or type below</div>
+        </div>
+        <div id="chatInputRow">
+          <input id="chatInput" type="text" placeholder="Type to EMO..."/>
+          <button id="chatSend">&#10148;</button>
+        </div>
+      </div>
+
+      <!-- GAMES -->
+      <div class="tabContent" id="gamesContent">
+        <div class="gameSection">
+          <div class="gTitle">&#9994; ROCK - PAPER - SCISSORS</div>
+          <div class="rpsRow">
+            <button class="rpsBtn" onclick="rps('rock')">&#9994;</button>
+            <button class="rpsBtn" onclick="rps('paper')">&#9995;</button>
+            <button class="rpsBtn" onclick="rps('scissors')">&#9996;</button>
+          </div>
+          <div id="rpsRes">Tap your move or use gesture in Superpowers tab!</div>
+        </div>
+        <div class="gameSection">
+          <div id="tttSt">Tic Tac Toe - Your turn (X)</div>
+          <div class="tttGrid" id="tttGrid"></div>
+          <button class="gReset" onclick="resetTTT()">NEW GAME</button>
+        </div>
+        <div class="voiceHint">
+          Say <b>"quiz me"</b> or <b>"tell me a riddle"</b> or <b>"guess the number"</b> or <b>"Simon says"</b>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="tabContent" id="settingsContent">
+        <div class="settRow"><span class="settLabel">WAKE WORD</span><span class="settVal">HEY EMO</span></div>
+        <div class="settRow"><span class="settLabel">VOICE PITCH</span><span class="settVal">HIGH (EMO STYLE)</span></div>
+        <div class="settRow"><span class="settLabel">LANGUAGE</span><span class="settVal">ENGLISH (US)</span></div>
+        <div class="settRow"><span class="settLabel">SLEEP TIMER</span><span class="settVal">2 MINUTES</span></div>
+        <div class="settRow"><span class="settLabel">AI MODEL</span><span class="settVal">CLAUDE SONNET</span></div>
+        <div class="settRow"><span class="settLabel">MEMORY</span><span class="settVal" id="memCount">0 ITEMS</span></div>
+        <div class="settNote">
+          <b>Publishing EMO in Chrome (FREE, no account, instant):</b><br>
+          1. Go to <b>tiiny.host</b> in Chrome<br>
+          2. Upload this HTML file<br>
+          3. Get your free https link instantly<br>
+          4. Open it in Chrome - mic and camera will work!<br><br>
+          <b>Permanent free (GitHub Pages):</b><br>
+          1. Go to github.com - create free account<br>
+          2. New repo named "emo" > upload file as index.html<br>
+          3. Settings > Pages > main branch<br>
+          4. Link: yourusername.github.io/emo (forever free)
+        </div>
+      </div>
+
+    </div><!-- end centerCol -->
+
+    <!-- RIGHT PANEL -->
+    <div id="rightCol">
+      <div class="panel">
+        <div class="c2"></div>
+        <div class="pTitle">PERSON DETECTION</div>
+        <div id="personFrame"><div id="personIcon">&#128100;</div></div>
+        <div id="detectLabel">NO PERSON DETECTED</div>
+        <div id="detectSub">Looking Around...</div>
+      </div>
+      <div class="panel">
+        <div class="c2"></div>
+        <div class="pTitle">EMO EYE BEHAVIOR</div>
+        <div class="eyeBehaviorRow">
+          <span class="eyeArrow">&#8592;</span>
+          <div class="eyeThumb"></div><div class="eyeThumb"></div>
+          <span class="eyeArrow">&#8594;</span>
+        </div>
+        <div id="behaviorLabel">AUTO SCANNING</div>
+        <div id="behaviorSub">LEFT &#8594; RIGHT<br>RIGHT &#8594; LEFT</div>
+      </div>
+      <div class="panel" style="flex:1;">
+        <div class="c2"></div>
+        <div class="pTitle">VOICE COMMANDS</div>
+        <div class="voiceCmd">
+          <div class="vcIcon">&#128483;</div>
+          <div class="vcText"><div class="vcName">HEY EMO</div><div class="vcDesc">Wake EMO</div></div>
+        </div>
+        <div class="voiceCmd">
+          <div class="vcIcon">&#10067;</div>
+          <div class="vcText"><div class="vcName">WHAT CAN YOU DO</div><div class="vcDesc">Show Features</div></div>
+        </div>
+        <div class="voiceCmd">
+          <div class="vcIcon">&#128514;</div>
+          <div class="vcText"><div class="vcName">TELL ME A JOKE</div><div class="vcDesc">Talk &amp; Entertain</div></div>
+        </div>
+        <div class="voiceCmd">
+          <div class="vcIcon">&#128218;</div>
+          <div class="vcText"><div class="vcName">TUTOR MODE</div><div class="vcDesc">Study With EMO</div></div>
+        </div>
+        <div class="voiceCmd">
+          <div class="vcIcon">&#127918;</div>
+          <div class="vcText"><div class="vcName">PLAY A GAME</div><div class="vcDesc">Games &amp; Fun</div></div>
+        </div>
+        <div class="voiceCmd">
+          <div class="vcIcon">&#128516;</div>
+          <div class="vcText"><div class="vcName">SHOW HOLOGRAM</div><div class="vcDesc">Visual Learning</div></div>
+        </div>
+        <div id="moreCmd">MORE COMMANDS...</div>
+      </div>
+    </div>
+
+  </div><!-- end main -->
+
+  <!-- BOTTOM BAR -->
+  <div id="bottomBar">
+    <div class="barSection">
+      <div class="barLabel">WAKE WORD</div>
+      <div class="barValue">&#9671; HEY EMO</div>
+      <div class="barSub">SAY TO ACTIVATE</div>
+    </div>
+    <div id="micSection">
+      <div id="micRing"><div id="micIcon">&#127908;</div></div>
+      <div id="micLabel" style="font-size:7px;color:var(--muted);letter-spacing:0.05em;">AUTO LISTEN</div>
+    </div>
+    <div class="barSection">
+      <div class="barLabel">TTS ACTIVE</div>
+      <div class="barValue" id="ttsStatus">READY...</div>
+      <div class="barSub" id="ttsSub">EMO IS READY</div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div id="tabBar">
+    <button class="tabBtn active" data-tab="home">
+      <span class="ticon">&#127968;</span><span class="tname">HOME</span>
+    </button>
+    <button class="tabBtn" data-tab="study">
+      <span class="ticon">&#127891;</span><span class="tname">STUDY</span>
+    </button>
+    <button class="tabBtn" data-tab="power">
+      <span class="ticon">&#9889;</span><span class="tname">SUPERPOWERS</span>
+    </button>
+    <button class="tabBtn" data-tab="chat">
+      <span class="ticon">&#128172;</span><span class="tname">AI CHAT</span>
+    </button>
+    <button class="tabBtn" data-tab="games">
+      <span class="ticon">&#127918;</span><span class="tname">GAMES</span>
+    </button>
+    <button class="tabBtn" data-tab="settings">
+      <span class="ticon">&#9881;</span><span class="tname">SETTINGS</span>
+    </button>
+  </div>
+
+  <div id="footer">Developed by Ritwik Verma</div>
+
+</div><!-- end app -->
+
+<script>
+/* =========================================================
+   EMO AI ROBOT v3.0
+   Developed by Ritwik Verma
+   Voice: Hands-free STT/TTS  |  Eyes: LED animation
+   Gestures: 24+ superpowers  |  AI: Claude Sonnet
+========================================================= */
+
+/* ---- DOM ---- */
+var eyeC    = document.getElementById('eyeC');
+var eyeX    = eyeC.getContext('2d');
+var fxC     = document.getElementById('fxC');
+var fxX     = fxC.getContext('2d');
+var waveC   = document.getElementById('waveC');
+var waveX   = waveC.getContext('2d');
+var moodC   = document.getElementById('moodWave');
+var moodX   = moodC.getContext('2d');
+
+/* ---- STATE ---- */
+var EMO = {
+  emotion:'calm', status:'idle',
+  awake:false, sleeping:false,
+  gazeX:0, gazeY:0, faceDetected:false,
+  activePower:null, lastInteract:Date.now(),
+  history:[], profile:{name:null,notes:[]},
+  currentTab:'home',
+};
+
+/* ---- EMOTIONS ---- */
+var EMOTIONS = {
+  calm:     {hex:'#2de1fc',squint:0.00,label:'NEUTRAL'},
+  happy:    {hex:'#2de1fc',squint:0.20,label:'HAPPY'},
+  curious:  {hex:'#5b8def',squint:0.00,label:'CURIOUS'},
+  excited:  {hex:'#2de1fc',squint:0.04,label:'EXCITED'},
+  surprised:{hex:'#caf0ff',squint:-0.30,label:'SURPRISED'},
+  sad:      {hex:'#5b6f9e',squint:0.12,label:'SAD'},
+  thinking: {hex:'#8a5bf0',squint:0.22,label:'THINKING'},
+  sleepy:   {hex:'#3a4a63',squint:0.90,label:'SLEEPY'},
+  love:     {hex:'#ff8fd0',squint:0.16,label:'LOVE'},
+  angry:    {hex:'#ff6b6b',squint:0.44,label:'ANGRY'},
+  proud:    {hex:'#2de1fc',squint:0.10,label:'PROUD'},
+  listening:{hex:'#2de1fc',squint:0.00,label:'LISTENING'},
+};
+
+/* ---- POWERS ---- */
+var POWERS = {
+  fist:    {name:'SHIELD DOME',  line:'Shields up!',         hot:'#9fd0ff',cool:'#1a5fcc',emo:'calm',   sfx:'shield'},
+  open:    {name:'ENERGY SURGE', line:'Energy surge!',       hot:'#c7faff',cool:'#00c2e8',emo:'excited',sfx:'energy'},
+  peace:   {name:'PEACE BEAM',   line:'Peace power!',        hot:'#ffb3e2',cool:'#ff3d9a',emo:'happy',  sfx:'energy'},
+  point:   {name:'LASER FOCUS',  line:'Target locked.',      hot:'#d2b8ff',cool:'#6a3df5',emo:'curious',sfx:'laser'},
+  thumbsup:{name:'PRIDE BLAST',  line:'Mission accepted!',   hot:'#ffe9a8',cool:'#ff8c00',emo:'proud',  sfx:'energy'},
+  shaka:   {name:'CHILL WAVE',   line:'Stay cool.',          hot:'#aef5f5',cool:'#1bb8b8',emo:'calm',   sfx:'shield'},
+  rock:    {name:'FIRE ROCK',    line:'Rock on!',            hot:'#ffb199',cool:'#ff3d1f',emo:'excited',sfx:'energy'},
+  pinky:   {name:'LUCK CHARM',   line:'Lucky you!',          hot:'#c8ffe8',cool:'#2ee6a0',emo:'happy',  sfx:'energy'},
+  three:   {name:'TRIPLE STRIKE',line:'Triple power!',       hot:'#d8ffb0',cool:'#7ed620',emo:'excited',sfx:'energy'},
+  four:    {name:'QUAD FORCE',   line:'Quad strike!',        hot:'#fff2a8',cool:'#ffb800',emo:'proud',  sfx:'energy'},
+  laser:   {name:'LASER BEAM',   line:'Laser fired!',        hot:'#b8ffd6',cool:'#1be673',emo:'curious',sfx:'laser'},
+  thunder: {name:'THUNDER BOLT', line:'Thunder strike!',     hot:'#fffaaa',cool:'#f0c000',emo:'excited',sfx:'thunder'},
+  plasma:  {name:'PLASMA BALL',  line:'Plasma released!',    hot:'#e8c0ff',cool:'#9000ff',emo:'thinking',sfx:'energy'},
+  mega:    {name:'MEGA BLAST',   line:'MAXIMUM POWER!',      hot:'#ffffff',cool:'#2de1fc',emo:'excited',sfx:'mega'},
+  cannon:  {name:'CANNON SHOT',  line:'Cannon fire!',        hot:'#ffffff',cool:'#ffdd00',emo:'excited',sfx:'gun'},
+  rainbow: {name:'RAINBOW STORM',line:'Rainbow storm!',      hot:'#ff80ff',cool:'#00ffcc',emo:'love',   sfx:'energy'},
+  iron:    {name:'IRON SHIELD',  line:'Iron fortress!',      hot:'#8080c0',cool:'#202060',emo:'calm',   sfx:'shield'},
+  inferno: {name:'INFERNO',      line:'Double inferno!',     hot:'#ff4400',cool:'#ff0000',emo:'angry',  sfx:'mega'},
+};
+
+var G1 = {
+  '00000':'fist','11111':'open','01100':'peace','01000':'point',
+  '10000':'thumbsup','00001':'pinky','01001':'rock','10001':'shaka',
+  '01110':'three','01111':'four','11000':'laser','10100':'thunder',
+  '10010':'plasma','11010':'aurora',
+};
+var G2 = {
+  'open:open':'mega','fist:open':'cannon','open:peace':'rainbow',
+  'fist:fist':'iron','rock:rock':'inferno',
+};
+
+/* ---- HELPERS ---- */
+function rl(a,b){return a+Math.random()*(b-a);}
+function lp(a,b,t){return a+(b-a)*t;}
+function dk(hex,f){
+  var n=parseInt(hex.slice(1),16);
+  var r=Math.max(0,((n>>16)&255)*(1-f)|0);
+  var g=Math.max(0,((n>>8)&255)*(1-f)|0);
+  var b=Math.max(0,(n&255)*(1-f)|0);
+  return 'rgb('+r+','+g+','+b+')';
+}
+function ha(hex,a){
+  var n=parseInt(hex.slice(1),16);
+  return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+}
+function rrect(ctx,x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);
+  ctx.beginPath();ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+
+/* ---- RESIZE ---- */
+function resize(){
+  var stage = document.getElementById('eyeStage');
+  var r = stage.getBoundingClientRect();
+  eyeC.width = r.width; eyeC.height = r.height;
+  fxC.width = r.width; fxC.height = r.height;
+  fxC.style.width = r.width+'px'; fxC.style.height = r.height+'px';
+  waveC.width = document.getElementById('waveBar').offsetWidth;
+  waveC.height = 26;
+  moodC.width = document.getElementById('moodWave').offsetWidth || 130;
+  moodC.height = 28;
+  sizeHoloCards();
+}
+window.addEventListener('resize', function(){setTimeout(resize,100);});
+
+/* =====================================================
+   EYES ANIMATION -- matching Image 2 states exactly
+===================================================== */
+var eye = {
+  blinkT:0, nextBlink:rl(2000,5500), blinkPhase:0,
+  idleX:0, idleY:0, tgtX:0, tgtY:0,
+  scanDir:1, scanT:0, lastIdle:0,
+  speakT:0, breathT:0, thinkT:0,
+};
+
+function drawEyes(ts){
+  if(!drawEyes.last) drawEyes.last=ts;
+  var dt=Math.min(50,ts-drawEyes.last); drawEyes.last=ts;
+  eyeX.clearRect(0,0,eyeC.width,eyeC.height);
+
+  var em = EMOTIONS[EMO.emotion] || EMOTIONS.calm;
+  var isSleep = EMO.sleeping || EMO.emotion==='sleepy';
+  var isThink = EMO.status==='thinking';
+
+  /* blink */
+  eye.blinkT+=dt;
+  if(eye.blinkT>eye.nextBlink&&!isSleep){
+    eye.blinkPhase=1; eye.blinkT=0; eye.nextBlink=rl(2500,6000);
+  }
+  if(eye.blinkPhase>0){eye.blinkPhase-=dt/110; if(eye.blinkPhase<0)eye.blinkPhase=0;}
+  var blinkAmt=eye.blinkPhase>0?Math.sin((1-eye.blinkPhase)*Math.PI):0;
+
+  /* gaze direction */
+  eye.scanT+=dt; eye.lastIdle+=dt;
+  if(isSleep){
+    eye.breathT+=dt/2200;
+    eye.tgtX=0; eye.tgtY=Math.sin(eye.breathT)*2;
+  } else if(EMO.faceDetected){
+    eye.tgtX=EMO.gazeX*16; eye.tgtY=EMO.gazeY*9;
+  } else {
+    /* auto scan like Image 1 */
+    if(eye.lastIdle>1500){eye.scanDir*=-1;eye.lastIdle=0;}
+    eye.tgtX=eye.scanDir*18; eye.tgtY=0;
+  }
+  eye.idleX=lp(eye.idleX,eye.tgtX,0.07);
+  eye.idleY=lp(eye.idleY,eye.tgtY,0.07);
+
+  /* speak pulse */
+  if(EMO.status==='speaking') eye.speakT+=dt;
+  var sp=EMO.status==='speaking'?1+Math.sin(eye.speakT/70)*0.07:1;
+
+  /* think flicker */
+  if(isThink) eye.thinkT+=dt;
+  var thinkA=isThink?(0.55+Math.abs(Math.sin(eye.thinkT/180))*0.45):1;
+
+  /* layout */
+  var W=eyeC.width, H=eyeC.height;
+  var CX=W/2, CY=H*0.46;
+  var EW=Math.min(W*0.32,160)*sp;
+  var EH=Math.min(H*0.52,160)*sp;
+  var GAP=EW*0.16;
+  var squint=isSleep?0.92:em.squint;
+
+  /* outer ambient glow */
+  var agl=eyeX.createRadialGradient(CX,CY,10,CX,CY,W*0.55);
+  agl.addColorStop(0,ha(em.hex,0.06));
+  agl.addColorStop(1,'rgba(0,0,0,0)');
+  eyeX.fillStyle=agl; eyeX.fillRect(0,0,W,H);
+
+  [-1,1].forEach(function(side){
+    var ex=CX+side*(GAP/2+EW/2)+eye.idleX;
+    var ey=CY+eye.idleY;
+    var h=EH*(1-squint)*(1-blinkAmt*0.94);
+    h=Math.max(2,h);
+    var w=EW;
+    /* surprised: scale up */
+    if(EMO.emotion==='surprised'){w*=1.12;h*=1.18;}
+    var r=Math.min(w,h)*0.44;
+
+    eyeX.save();
+    eyeX.globalAlpha=isSleep?0.5:thinkA;
+
+    /* deep outer glow (multiple passes) */
+    eyeX.shadowColor=em.hex; eyeX.shadowBlur=50;
+    eyeX.fillStyle=ha(em.hex,0.15);
+    rrect(eyeX,ex-w/2-10,ey-h/2-6,w+20,h+12,r+8);
+    eyeX.fill();
+    eyeX.shadowBlur=0;
+
+    /* 3D bevel - darker bottom-right */
+    eyeX.fillStyle=dk(em.hex,0.45);
+    rrect(eyeX,ex-w/2-4,ey-h/2+5,w,h,r);
+    eyeX.fill();
+
+    /* main LED face */
+    eyeX.shadowColor=em.hex; eyeX.shadowBlur=30;
+    eyeX.fillStyle=em.hex;
+    rrect(eyeX,ex-w/2,ey-h/2,w,h,r);
+    eyeX.fill();
+    eyeX.shadowBlur=0;
+
+    /* glossy top sheen */
+    if(h>8){
+      var sg=eyeX.createLinearGradient(ex-w/2,ey-h/2,ex-w/2+w*0.3,ey-h/2+h*0.4);
+      sg.addColorStop(0,'rgba(255,255,255,0.35)');
+      sg.addColorStop(1,'rgba(255,255,255,0)');
+      eyeX.fillStyle=sg;
+      rrect(eyeX,ex-w/2,ey-h/2,w,h,r);
+      eyeX.fill();
+    }
+
+    /* inner edge glow line */
+    eyeX.strokeStyle=ha('#ffffff',0.18);
+    eyeX.lineWidth=1.5;
+    rrect(eyeX,ex-w/2+2,ey-h/2+2,w-4,h-4,Math.max(0,r-2));
+    eyeX.stroke();
+
+    /* sleeping ZZZ */
+    if(isSleep&&side===1){
+      var zt=(Date.now()%2400)/2400;
+      eyeX.globalAlpha=(1-zt)*0.85;
+      eyeX.fillStyle=em.hex;
+      eyeX.font='bold '+(12+zt*8)+'px Orbitron,monospace';
+      eyeX.fillText('z',ex+w*0.5+zt*14,ey-h*0.5-zt*18);
+    }
+
+    eyeX.restore();
+  });
+
+  requestAnimationFrame(drawEyes);
+}
+
+/* =====================================================
+   WAVEFORM VISUALIZER
+===================================================== */
+var waveT=0, waveAmplitude=0;
+function drawWave(ts){
+  if(!drawWave.last)drawWave.last=ts;
+  waveT+=(ts-drawWave.last)/1000; drawWave.last=ts;
+  waveX.clearRect(0,0,waveC.width,waveC.height);
+  var W=waveC.width, H=waveC.height, cx=W/2, cy=H/2;
+  var active=EMO.status==='listening'||EMO.status==='speaking';
+  waveAmplitude=lp(waveAmplitude,active?1:0.15,0.05);
+  waveX.strokeStyle='rgba(45,225,252,0.7)';
+  waveX.lineWidth=1.5;
+  waveX.beginPath();
+  for(var x=0;x<W;x+=2){
+    var xn=(x/W)*2*Math.PI;
+    var y=cy+Math.sin(xn*8+waveT*4)*waveAmplitude*8
+         +Math.sin(xn*5+waveT*3)*waveAmplitude*4
+         +Math.sin(xn*13+waveT*5)*waveAmplitude*2;
+    if(x===0)waveX.moveTo(x,y); else waveX.lineTo(x,y);
+  }
+  waveX.stroke();
+  requestAnimationFrame(drawWave);
+}
+
+function drawMoodWave(ts){
+  if(!drawMoodWave.last)drawMoodWave.last=ts;
+  var dt=(ts-drawMoodWave.last)/1000; drawMoodWave.last=ts;
+  moodX.clearRect(0,0,moodC.width,moodC.height);
+  var W=moodC.width,H=moodC.height,cy=H/2;
+  var em=EMOTIONS[EMO.emotion]||EMOTIONS.calm;
+  moodX.strokeStyle=em.hex; moodX.lineWidth=1.5;
+  moodX.beginPath();
+  for(var x=0;x<W;x+=2){
+    var y=cy+Math.sin((x/W)*6*Math.PI+waveT*2)*6;
+    if(x===0)moodX.moveTo(x,y); else moodX.lineTo(x,y);
+  }
+  moodX.stroke();
+  requestAnimationFrame(drawMoodWave);
+}
+
+/* =====================================================
+   PARTICLE FIREBALL SYSTEM
+===================================================== */
+var particles=[], shockwaves=[], coreLife=0, coreColor='#fff';
+
+function spawnPower(cfg){
+  coreLife=1; coreColor=cfg.hot;
+  var cx=fxC.width/2, cy=fxC.height*0.46;
+  for(var i=0;i<80;i++){
+    var a=Math.random()*6.28,spd=Math.random()*3.2+0.5;
+    particles.push({
+      x:cx,y:cy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-1.0,
+      size:Math.random()*8+3,life:1,
+      decay:Math.random()*0.016+0.010,
+      color:Math.random()<0.55?cfg.hot:cfg.cool,
+    });
+  }
+  shockwaves.push({x:cx,y:cy,r:0,maxR:Math.max(fxC.width,fxC.height)*0.7,life:1,color:cfg.hot});
+}
+
+function spawnGunshot(){
+  coreLife=1; coreColor='#ffffff';
+  var cx=fxC.width/2, cy=fxC.height*0.46;
+  for(var i=0;i<100;i++){
+    var a=Math.random()*6.28,spd=Math.random()*4+1;
+    var g=Math.round(160+Math.random()*90);
+    particles.push({
+      x:cx,y:cy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-0.5,
+      size:Math.random()*7+2,life:1,decay:Math.random()*0.022+0.014,
+      color:'rgb('+g+','+g+','+g+')',
+    });
+  }
+  shockwaves.push({x:cx,y:cy,r:0,maxR:Math.max(fxC.width,fxC.height)*0.9,life:1,color:'#ffffff'});
+  playSFX('gun');
+  /* screen flash */
+  fxC.style.background='rgba(255,255,255,0.15)';
+  setTimeout(function(){fxC.style.background='';},80);
+}
+
+function drawFx(ts){
+  if(!drawFx.last)drawFx.last=ts;
+  var dt=Math.min(50,ts-drawFx.last); drawFx.last=ts;
+  fxX.clearRect(0,0,fxC.width,fxC.height);
+
+  if(coreLife>0){
+    coreLife=Math.max(0,coreLife-dt/170);
+    var cx=fxC.width/2,cy=fxC.height*0.46;
+    var gr=fxX.createRadialGradient(cx,cy,0,cx,cy,100*coreLife+14);
+    gr.addColorStop(0,'rgba(255,255,255,'+(0.9*coreLife)+')');
+    gr.addColorStop(0.45,ha(coreColor,0.5*coreLife));
+    gr.addColorStop(1,'rgba(0,0,0,0)');
+    fxX.fillStyle=gr;
+    fxX.beginPath();fxX.arc(cx,cy,100*coreLife+14,0,6.28);fxX.fill();
+  }
+  shockwaves=shockwaves.filter(function(s){return s.life>0;});
+  shockwaves.forEach(function(sw){
+    sw.r+=dt*1.9; sw.life=Math.max(0,1-sw.r/sw.maxR);
+    fxX.strokeStyle=ha(sw.color,sw.life*0.65);
+    fxX.lineWidth=(3*(1-sw.r/sw.maxR)+1);
+    fxX.beginPath();fxX.arc(sw.x,sw.y,sw.r,0,6.28);fxX.stroke();
+  });
+  particles=particles.filter(function(p){return p.life>0;});
+  particles.forEach(function(p){
+    p.x+=p.vx;p.y+=p.vy;p.vy-=0.012;p.vx*=0.985;p.vy*=0.986;p.life-=p.decay;
+    fxX.save();
+    fxX.globalAlpha=Math.max(0,p.life);
+    fxX.fillStyle=p.color;
+    fxX.shadowColor=p.color;fxX.shadowBlur=10;
+    fxX.beginPath();fxX.arc(p.x,p.y,p.size*Math.max(0.2,p.life),0,6.28);fxX.fill();
+    fxX.restore();
+  });
+  requestAnimationFrame(drawFx);
+}
+
+/* =====================================================
+   WEB AUDIO SFX
+===================================================== */
+var AC=null;
+function getAC(){if(!AC)try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}return AC;}
+function playSFX(t){
+  var ctx=getAC();if(!ctx)return;
+  try{
+    if(t==='gun'){
+      var b=ctx.createBuffer(1,ctx.sampleRate*0.18,ctx.sampleRate);
+      var d=b.getChannelData(0);
+      for(var i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.4)*0.75;
+      var s=ctx.createBufferSource();s.buffer=b;
+      var g=ctx.createGain();g.gain.value=0.7;
+      s.connect(g);g.connect(ctx.destination);s.start();
+    }else if(t==='energy'){
+      var o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.setValueAtTime(220,ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(880,ctx.currentTime+0.15);
+      g.gain.setValueAtTime(0.28,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.28);
+      o.start();o.stop(ctx.currentTime+0.28);
+    }else if(t==='shield'){
+      var o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine';o.connect(g);g.connect(ctx.destination);
+      o.frequency.setValueAtTime(110,ctx.currentTime);
+      o.frequency.linearRampToValueAtTime(220,ctx.currentTime+0.4);
+      g.gain.setValueAtTime(0.18,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
+      o.start();o.stop(ctx.currentTime+0.5);
+    }else if(t==='laser'){
+      var o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sawtooth';o.connect(g);g.connect(ctx.destination);
+      o.frequency.setValueAtTime(1200,ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(200,ctx.currentTime+0.22);
+      g.gain.setValueAtTime(0.22,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.22);
+      o.start();o.stop(ctx.currentTime+0.22);
+    }else if(t==='thunder'){
+      var b2=ctx.createBuffer(1,ctx.sampleRate*0.4,ctx.sampleRate);
+      var d2=b2.getChannelData(0);
+      for(var i=0;i<d2.length;i++)d2[i]=(Math.random()*2-1)*Math.pow(1-i/d2.length,0.35)*0.55;
+      var s2=ctx.createBufferSource();s2.buffer=b2;
+      var g2=ctx.createGain();g2.gain.value=0.5;
+      s2.connect(g2);g2.connect(ctx.destination);s2.start();
+    }else if(t==='mega'){
+      playSFX('thunder');setTimeout(function(){playSFX('energy');},120);
+    }
+  }catch(e){}
+}
+
+/* =====================================================
+   TTS
+===================================================== */
+var bestV=null;
+function initTTS(){
+  if(!window.speechSynthesis)return;
+  var load=function(){var vs=speechSynthesis.getVoices();
+    bestV=vs.find(function(v){return /Samantha|Google US English|Aria|Zira/i.test(v.name)&&v.lang.startsWith('en');})||vs.find(function(v){return v.lang==='en-US';})||vs[0];};
+  window.speechSynthesis.onvoiceschanged=load; load();
+}
+function speak(text,emoName){
+  if(emoName)setEmotion(emoName);
+  setStatus('speaking');
+  setTTSBar('SPEAKING...','EMO IS TALKING');
+  showSpeech(text);
+  addBubble('emo',text);
+  if(!window.speechSynthesis){setStatus('listening');return;}
+  speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(text);
+  if(bestV)u.voice=bestV;
+  u.rate=1.04;u.pitch=1.12;
+  u.onend=function(){
+    setStatus(EMO.awake?'listening':'idle');
+    setTTSBar('READY...','EMO IS READY');
+    if(EMO.awake&&recOn)safeStart();
+  };
+  speechSynthesis.speak(u);
+  stopRec();
+}
+
+/* =====================================================
+   STT
+===================================================== */
+var rec=null,recOn=false;
+function initSTT(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){setMicStatus('NOT SUPPORTED - USE CHROME');return;}
+  rec=new SR();rec.continuous=true;rec.interimResults=true;rec.lang='en-US';
+  rec.onresult=function(ev){
+    var r=ev.results[ev.results.length-1];
+    var t=r[0].transcript.trim();if(!t)return;
+    if(!r.isFinal){showUserSpeech(t);return;}
+    document.getElementById('userSpeech').style.opacity='0';
+    handleVoice(t);
+  };
+  rec.onerror=function(ev){
+    if(ev.error==='not-allowed'){setMicStatus('MIC BLOCKED');return;}
+    if(recOn)setTimeout(safeStart,400);
+  };
+  rec.onend=function(){if(recOn&&EMO.status!=='speaking')safeStart();};
+  safeStart();
+}
+function safeStart(){
+  if(!rec)return;
+  try{rec.start();}catch(e){}
+  recOn=true;
+  setMicStatus(EMO.awake?'LISTENING':'SAY HEY EMO');
+  document.getElementById('micIcon').style.color='#2de1fc';
+}
+function stopRec(){if(rec)try{rec.stop();}catch(e){}}
+
+/* =====================================================
+   WAKE WORD & VOICE HANDLING
+===================================================== */
+var WAKE=['hey emo','hello emo','emo wake'];
+var SLEEP=['go to sleep','goodnight emo','sleep now','stop listening'];
+
+function handleVoice(text){
+  var lo=text.toLowerCase();
+  EMO.lastInteract=Date.now();
+  if(EMO.awake&&SLEEP.some(function(s){return lo.includes(s);})){goSleep();return;}
+  if(!EMO.awake){
+    if(WAKE.some(function(w){return lo.includes(w);})){
+      wakeUp();
+      var rest=lo;WAKE.forEach(function(w){rest=rest.replace(w,'');});rest=rest.trim();
+      if(rest.length>2)sendToAI(rest);
+    }
+    return;
+  }
+  /* navigation commands */
+  if(lo.includes('study')||lo.includes('learn')||lo.includes('hologram')){switchTab('study');sendToAI(text);return;}
+  if(lo.includes('superpower')||lo.includes('gesture')){switchTab('power');return;}
+  if(lo.includes('play game')||lo.includes('rock paper')||lo.includes('tic tac')){switchTab('games');speak('Game time!','happy');return;}
+  if(lo.includes('show solar')){switchTab('study');studyTopic('solar');return;}
+  if(lo.includes('show dna')||lo.includes('dna')){switchTab('study');studyTopic('dna');return;}
+  if(lo.includes('molecule')){switchTab('study');studyTopic('molecule');return;}
+  sendToAI(text);
+}
+
+function wakeUp(){
+  if(EMO.awake)return;
+  EMO.awake=true;EMO.sleeping=false;
+  setStatus('listening');setEmotion('curious');
+  document.getElementById('detectLabel').textContent='PERSON DETECTED';
+  document.getElementById('detectSub').textContent='EMO is awake!';
+  document.getElementById('faceInfo').textContent='Person found\nTracking...';
+  var g=EMO.profile.name?'Hey '+EMO.profile.name+'!':'Hey! I\'m EMO. I\'m here!';
+  speak(g,'happy');
+  resetSleep();
+}
+function goSleep(){
+  EMO.awake=false;EMO.sleeping=true;
+  setStatus('idle');setEmotion('sleepy');
+  setMicStatus('SAY HEY EMO');
+  speak('Going to sleep. Say Hey EMO to wake me.','sleepy');
+  if(EMO._sleepT)clearTimeout(EMO._sleepT);
+}
+function resetSleep(){
+  if(EMO._sleepT)clearTimeout(EMO._sleepT);
+  EMO._sleepT=setTimeout(function(){goSleep();},120000);
+}
+
+/* =====================================================
+   AI BRAIN
+===================================================== */
+var SYS='You are EMO, the world\'s most advanced AI robot companion, developed by Ritwik Verma. '+
+'You are a digital pet, study tutor, game partner, and assistant. '+
+'Personality: funny, playful, curious, emotionally expressive, loyal, caring. '+
+'Keep spoken replies short (1-3 sentences). '+
+'Respond ONLY as raw JSON: {"emotion":"calm|happy|curious|excited|surprised|sad|thinking|sleepy|love|angry|proud","reply":"spoken text","memory":{"name":"opt","notes":["opt"]},"hologram":"solar|dna|molecule|globe|atom|heart|none"}';
+
+function sendToAI(text){
+  setStatus('thinking');setEmotion('thinking');
+  setTTSBar('PROCESSING...','AI BRAIN ACTIVE');
+  EMO.history.push({role:'user',content:text});
+  var prof=EMO.profile.name?'[User:'+EMO.profile.name+' notes:'+EMO.profile.notes.join(';')+']':'';
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6',max_tokens:400,
+      system:SYS+(prof?'\n'+prof:''),
+      messages:EMO.history.slice(-16),
+    }),
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    var raw=(data.content||[]).map(function(b){return b.text||'';}).join('');
+    var clean=raw.replace(/```json|```/g,'').trim();
+    var p;try{p=JSON.parse(clean);}catch(e){p={emotion:'curious',reply:raw.slice(0,200)||'Try again!'};}
+    EMO.history.push({role:'assistant',content:raw});
+    if(p.memory&&p.memory.name){EMO.profile.name=p.memory.name;saveProfile();}
+    if(p.memory&&p.memory.notes){EMO.profile.notes=(EMO.profile.notes.concat(p.memory.notes)).slice(-10);saveProfile();}
+    if(p.hologram&&p.hologram!=='none'){setTimeout(function(){switchTab('study');studyTopic(p.hologram);},600);}
+    speak(p.reply||'I heard you!',p.emotion||'calm');
+    resetSleep();
+  })
+  .catch(function(){speak('Hmm, my brain is offline! Check internet.','curious');});
+}
+
+/* =====================================================
+   UI SETTERS
+===================================================== */
+function setStatus(s){
+  EMO.status=s;
+  var el=document.getElementById('waveStatus');
+  var labels={idle:'STANDBY',listening:'I\'M LISTENING...',thinking:'PROCESSING...',speaking:'SPEAKING...',};
+  el.textContent=labels[s]||'I\'M LISTENING...';
+  el.style.color=s==='speaking'?'#ff8fd0':s==='thinking'?'#8a5bf0':'#2de1fc';
+}
+function setEmotion(name){
+  if(!EMOTIONS[name])name='calm';
+  EMO.emotion=name;
+  var em=EMOTIONS[name];
+  document.getElementById('moodLabel').textContent=em.label||name.toUpperCase();
+  document.getElementById('moodLabel').style.color=em.hex;
+  document.getElementById('behaviorLabel').textContent=EMO.faceDetected?'FACE TRACKING':'AUTO SCANNING';
+}
+function setTTSBar(val,sub){
+  document.getElementById('ttsStatus').textContent=val;
+  document.getElementById('ttsSub').textContent=sub;
+}
+function setMicStatus(s){
+  document.getElementById('micLabel').textContent=s;
+}
+function showSpeech(text){
+  var el=document.getElementById('speechOverlay');
+  el.textContent=text;el.style.opacity='1';
+  if(showSpeech._t)clearTimeout(showSpeech._t);
+  showSpeech._t=setTimeout(function(){el.style.opacity='0';},Math.max(3000,text.length*55));
+}
+function showUserSpeech(text){
+  var el=document.getElementById('userSpeech');
+  el.textContent=text;el.style.opacity='1';
+}
+function showPowerLbl(name,color){
+  var el=document.getElementById('powerLabel');
+  el.textContent=name;el.style.color=color;el.style.opacity='1';
+  if(showPowerLbl._t)clearTimeout(showPowerLbl._t);
+  showPowerLbl._t=setTimeout(function(){el.style.opacity='0';},2500);
+}
+function addBubble(who,text){
+  var log=document.getElementById('chatLog');
+  var d=document.createElement('div');
+  d.className='bubble '+who; d.textContent=text;
+  log.appendChild(d); log.scrollTop=log.scrollHeight;
+}
+
+/* =====================================================
+   TABS
+===================================================== */
+var TABS={home:'homeContent',study:'studyContent',power:'powerContent',chat:'chatContent',games:'gamesContent',settings:'settingsContent'};
+function switchTab(name){
+  EMO.currentTab=name;
+  document.querySelectorAll('.tabBtn').forEach(function(b){
+    b.classList.toggle('active',b.dataset.tab===name);
+  });
+  document.querySelectorAll('.tabContent').forEach(function(p){p.classList.remove('active');});
+  var c=document.getElementById(TABS[name]||'homeContent');
+  if(c)c.classList.add('active');
+  if(name==='power')startHandCam();
+  setTimeout(resize,50);
+}
+document.querySelectorAll('.tabBtn').forEach(function(b){
+  b.addEventListener('click',function(){
+    getAC();
+    switchTab(b.dataset.tab);
+    EMO.lastInteract=Date.now();
+    if(EMO.sleeping)EMO.sleeping=false;
+  });
+});
+
+/* =====================================================
+   MEMORY
+===================================================== */
+function loadProfile(){
+  try{
+    window.storage.get('emo:v3',false).then(function(r){
+      if(r&&r.value)EMO.profile=JSON.parse(r.value);
+      if(EMO.profile.name)showSpeech('Welcome back, '+EMO.profile.name+'!');
+      document.getElementById('memCount').textContent=(EMO.profile.notes.length+1)+' ITEMS';
+    });
+  }catch(e){}
+}
+function saveProfile(){
+  try{window.storage.set('emo:v3',JSON.stringify(EMO.profile),false);}catch(e){}
+}
+
+/* =====================================================
+   HOLOGRAM STUDY
+===================================================== */
+var holoT=0;
+function sizeHoloCards(){
+  ['solar','dna','molecule','globe','atom','heart'].forEach(function(id){
+    var c=document.getElementById('hc-'+id);
+    if(c&&c.parentElement)c.width=c.parentElement.offsetWidth||120;
+  });
+}
+function holoLoop(ts){
+  if(!holoLoop.last)holoLoop.last=ts;
+  holoT+=(ts-holoLoop.last)/1000; holoLoop.last=ts;
+  ['solar','dna','molecule','globe','atom','heart'].forEach(function(id){
+    var c=document.getElementById('hc-'+id);
+    if(c&&document.getElementById('studyContent').classList.contains('active'))
+      drawHoloMini(id,c,holoT);
+  });
+  requestAnimationFrame(holoLoop);
+}
+function drawHoloMini(type,c,t){
+  var ctx=c.getContext('2d'),W=c.width,H=c.height,cx=W/2,cy=H/2;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#010810';ctx.fillRect(0,0,W,H);
+  if(type==='solar'){
+    for(var i=1;i<=3;i++){ctx.beginPath();ctx.arc(cx,cy,i*20,0,6.28);ctx.strokeStyle='rgba(91,141,239,0.14)';ctx.lineWidth=1;ctx.stroke();}
+    ctx.beginPath();ctx.arc(cx,cy,7,0,6.28);ctx.fillStyle='#ffd76a';ctx.shadowColor='#ffd76a';ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;
+    [[20,3,'#9fb4c9',2.2],[33,3.5,'#5b8def',1.4],[46,3,'#ff8fd0',0.9],[60,4.5,'#2de1fc',0.55]].forEach(function(p){
+      var a=t*p[3],px=cx+Math.cos(a)*p[0],py=cy+Math.sin(a)*p[0]*0.4;
+      ctx.beginPath();ctx.arc(px,py,p[1],0,6.28);ctx.fillStyle=p[2];ctx.fill();
+    });
+  }else if(type==='dna'){
+    for(var x=-W/2;x<W/2;x+=4){
+      var a=x/15+t;
+      ctx.beginPath();ctx.arc(cx+x,cy+Math.sin(a)*25,2,0,6.28);ctx.fillStyle='#2de1fc';ctx.fill();
+      ctx.beginPath();ctx.arc(cx+x,cy+Math.sin(a+3.14)*25,2,0,6.28);ctx.fillStyle='#ff8fd0';ctx.fill();
+      if(Math.round(x)%20===0){ctx.strokeStyle='rgba(255,255,255,0.14)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx+x,cy+Math.sin(a)*25);ctx.lineTo(cx+x,cy+Math.sin(a+3.14)*25);ctx.stroke();}
+    }
+  }else if(type==='molecule'){
+    var atoms=[[0,0,'#2de1fc',10],[36,18,'#ff8fd0',6],[36,-18,'#ff8fd0',6],[-36,18,'#5b8def',6],[-36,-18,'#5b8def',6]];
+    atoms.slice(1).forEach(function(a){ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+a[0],cy+a[1]);ctx.stroke();});
+    atoms.forEach(function(a,i){var pulse=i===0?Math.sin(t*3)*2:0;ctx.beginPath();ctx.arc(cx+a[0]+Math.sin(t)*1.5,cy+a[1],a[3]+pulse,0,6.28);ctx.fillStyle=a[2];ctx.shadowColor=a[2];ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;});
+  }else if(type==='globe'){
+    ctx.beginPath();ctx.arc(cx,cy,28,0,6.28);ctx.fillStyle='rgba(91,141,239,0.1)';ctx.fill();ctx.strokeStyle='rgba(45,225,252,0.25)';ctx.lineWidth=1;ctx.stroke();
+    for(var lat=-60;lat<=60;lat+=30){ctx.beginPath();ctx.ellipse(cx,cy+28*Math.sin(lat*0.01745),28*Math.cos(lat*0.01745),Math.abs(28*Math.cos(lat*0.01745)*0.4),0,0,6.28);ctx.strokeStyle='rgba(45,225,252,0.1)';ctx.stroke();}
+    var ml=t*0.6;ctx.beginPath();ctx.arc(cx+Math.cos(ml)*28,cy+Math.sin(ml)*12,4,0,6.28);ctx.fillStyle='#2de1fc';ctx.shadowColor='#2de1fc';ctx.shadowBlur=7;ctx.fill();ctx.shadowBlur=0;
+  }else if(type==='atom'){
+    ctx.beginPath();ctx.arc(cx,cy,7,0,6.28);ctx.fillStyle='#ffd76a';ctx.shadowColor='#ffd76a';ctx.shadowBlur=10;ctx.fill();ctx.shadowBlur=0;
+    [[34,0.18,'#2de1fc'],[28,0.33,'#ff8fd0'],[22,0.52,'#5b8def']].forEach(function(p,i){
+      var ang=i*2.094;ctx.save();ctx.translate(cx,cy);ctx.rotate(ang);
+      ctx.beginPath();ctx.ellipse(0,0,p[0],p[0]*0.36,0,0,6.28);ctx.strokeStyle=p[2]+'88';ctx.lineWidth=1;ctx.stroke();
+      var ea=t*p[1]*(i%2===0?1:-1);ctx.beginPath();ctx.arc(Math.cos(ea)*p[0],Math.sin(ea)*p[0]*0.36,2.5,0,6.28);ctx.fillStyle=p[2];ctx.fill();ctx.restore();
+    });
+  }else if(type==='heart'){
+    var bt=1+Math.sin(t*3.5)*0.12;ctx.save();ctx.translate(cx,cy);ctx.scale(bt,bt);
+    ctx.beginPath();ctx.moveTo(0,9);ctx.bezierCurveTo(0,4,-14,-9,-17,-4);ctx.bezierCurveTo(-25,2,-25,16,-9,25);
+    ctx.lineTo(0,34);ctx.lineTo(9,25);ctx.bezierCurveTo(25,16,25,2,17,-4);ctx.bezierCurveTo(14,-9,0,4,0,9);ctx.closePath();
+    ctx.fillStyle='rgba(255,143,208,0.85)';ctx.shadowColor='#ff8fd0';ctx.shadowBlur=14;ctx.fill();ctx.restore();
+  }
+}
+
+function studyTopic(type){
+  document.querySelectorAll('.studyCard').forEach(function(c){c.classList.remove('active');});
+  var card=document.getElementById('scard-'+type);if(card)card.classList.add('active');
+  var info={
+    solar:'The Solar System has 8 planets orbiting the Sun. Mercury is the smallest and closest. Earth is the 3rd planet and only known world with life. Jupiter is the largest planet with the Great Red Spot storm!',
+    dna:'DNA is your genetic code! It is shaped like a twisted ladder called a double helix. Every cell in your body contains 3 billion base pairs of DNA that determine who you are!',
+    molecule:'Molecules are atoms bonded together. Water is H2O - two hydrogen and one oxygen atom. Everything you see, touch, and breathe is made of molecules working together!',
+    globe:'Earth is 4.5 billion years old! It is 71 percent covered in water with 7 continents and 195 countries. Earth rotates once every 24 hours and orbits the Sun in 365 days!',
+    atom:'An atom is the smallest unit of matter. Its nucleus contains protons and neutrons, surrounded by a cloud of electrons. Most of an atom is actually empty space!',
+    heart:'Your heart beats 100,000 times per day! It pumps 5 liters of blood per minute through 100,000 km of blood vessels to keep your whole body alive and healthy!',
+  };
+  var text=info[type]||'Exploring...';
+  document.getElementById('studyInfo').textContent=text;
+  setEmotion('excited');
+  speak(text,'excited');
+}
+
+/* =====================================================
+   GESTURE SUPERPOWERS + HAND CAMERA
+===================================================== */
+var handCamOn=false, handsM=null;
+var handVid=document.getElementById('handVideo');
+var handOv=document.getElementById('handOvC');
+var handOvX=handOv.getContext('2d');
+var HC=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],
+        [0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
+var lastG=null,lastGT=0;
+
+function loadMP(){return new Promise(function(res,rej){if(window.Hands){res();return;}var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js';s.crossOrigin='anonymous';s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+
+function startHandCam(){
+  if(handCamOn)return;
+  document.getElementById('handLabel').textContent='Loading gesture system...';
+  loadMP().then(function(){
+    navigator.mediaDevices.getUserMedia({video:{width:320,height:240,facingMode:'user'}})
+    .then(function(stream){
+      handVid.srcObject=stream;
+      handOv.width=320;handOv.height=240;
+      handsM=new window.Hands({locateFile:function(f){return 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/'+f;}});
+      handsM.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:0.55,minTrackingConfidence:0.55});
+      handsM.onResults(onHands);
+      handCamOn=true;
+      document.getElementById('dCamera').classList.remove('off');
+      document.getElementById('dCamera').classList.add('on');
+      document.getElementById('handLabel').textContent='Show EMO your hand!';
+      handLoop();
+    })
+    .catch(function(){document.getElementById('handLabel').textContent='Camera blocked - needs https://';});
+  }).catch(function(){document.getElementById('handLabel').textContent='Hand system unavailable';});
+}
+
+function handLoop(){if(!handCamOn)return;if(handVid.readyState>=2)try{handsM.send({image:handVid});}catch(e){}requestAnimationFrame(handLoop);}
+
+function classifyOne(lm){
+  var d=function(a,b){return Math.sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));};
+  var ext=function(tip,pip){return lm[tip].y<lm[pip].y-0.028;};
+  var thumb=d(lm[4],lm[17])>d(lm[3],lm[17])+0.02;
+  var sig=[thumb,ext(8,6),ext(12,10),ext(16,14),ext(20,18)].map(function(b){return b?'1':'0';}).join('');
+  return G1[sig]||null;
+}
+
+function onHands(res){
+  if(!res.multiHandLandmarks)return;
+  var W=handOv.width,H=handOv.height;
+  handOvX.clearRect(0,0,W,H);
+  var found=res.multiHandLandmarks.length>0;
+  if(found&&!EMO.faceDetected){
+    EMO.faceDetected=true;
+    document.getElementById('detectLabel').textContent='PERSON DETECTED';
+    document.getElementById('detectSub').textContent='Tracking active';
+    document.getElementById('faceInfo').textContent='Person found\nTracking...';
+    document.getElementById('eyeModeLabel').textContent='FACE TRACKING';
+    if(!EMO.awake){setEmotion('happy');speak('Hello! I see you!','happy');setTimeout(wakeUp,1200);}
+  }
+  if(!found&&EMO.faceDetected){
+    EMO.faceDetected=false;
+    document.getElementById('detectLabel').textContent='NO PERSON DETECTED';
+    document.getElementById('detectSub').textContent='Looking Around...';
+    document.getElementById('eyeModeLabel').textContent='AUTO SCAN MODE';
+  }
+  /* draw landmarks */
+  res.multiHandLandmarks.forEach(function(lm){
+    HC.forEach(function(c){
+      handOvX.beginPath();handOvX.moveTo(lm[c[0]].x*W,lm[c[0]].y*H);
+      handOvX.lineTo(lm[c[1]].x*W,lm[c[1]].y*H);
+      handOvX.strokeStyle='rgba(45,225,252,0.55)';handOvX.lineWidth=2;handOvX.stroke();
+    });
+    lm.forEach(function(p){handOvX.beginPath();handOvX.arc(p.x*W,p.y*H,3,0,6.28);handOvX.fillStyle='#2de1fc';handOvX.fill();});
+    if(lm[0]){EMO.gazeX=-(lm[0].x*2-1);EMO.gazeY=lm[0].y*2-1;}
+  });
+  /* classify */
+  var gestures=[];
+  res.multiHandLandmarks.forEach(function(lm,idx){
+    var g=classifyOne(lm);
+    var hand=res.handednesses&&res.handednesses[idx]?res.handednesses[idx][0].categoryName:'Right';
+    if(g)gestures.push({g:g,hand:hand});
+  });
+  var power=null;
+  if(gestures.length>=2){var gs=gestures.map(function(x){return x.g;}).sort().join(':');power=G2[gs]||null;}
+  if(!power&&gestures.length>0)power=gestures[0].g;
+  if(power){
+    var now=Date.now();
+    if(power!==lastG||now-lastGT>2400){
+      lastG=power;lastGT=now;
+      var cfg=POWERS[power];
+      if(cfg){
+        setEmotion(cfg.emo);
+        speak(cfg.line,cfg.emo);
+        if(power==='cannon')spawnGunshot(); else spawnPower(cfg);
+        playSFX(cfg.sfx);
+        showPowerLbl(cfg.name,cfg.hot);
+        addBubble('sys','POWER: '+cfg.name);
+        resetSleep();
+        /* switch to home to show the effect */
+        if(EMO.currentTab!=='home')switchTab('home');
+      }
+    }
+    document.getElementById('handLabel').textContent=power.toUpperCase()+' DETECTED';
+  }else if(found){
+    document.getElementById('handLabel').textContent='Hold a gesture...';
+  }
+}
+
+/* =====================================================
+   GAMES
+===================================================== */
+function rps(choice){
+  var opts=['rock','paper','scissors'];
+  var emo=opts[Math.floor(Math.random()*3)];
+  var beats={rock:'scissors',scissors:'paper',paper:'rock'};
+  var res,line,emotion;
+  if(choice===emo){res='TIE';line='Tie! We both chose '+choice+'!';emotion='surprised';}
+  else if(beats[choice]===emo){res='YOU WIN!';line='You win! '+choice+' beats '+emo+'!';emotion='sad';}
+  else{res='EMO WINS!';line='I win! '+emo+' beats '+choice+'!';emotion='happy';}
+  document.getElementById('rpsRes').textContent='You: '+choice+' vs EMO: '+emo+' - '+res;
+  setEmotion(emotion);speak(line,emotion);EMO.lastInteract=Date.now();
+}
+
+var tttB=new Array(9).fill(null),tttOver=false;
+function renderTTT(){
+  var grid=document.getElementById('tttGrid');grid.innerHTML='';
+  tttB.forEach(function(v,i){
+    var c=document.createElement('div');c.className='tttCell'+(v==='O'?' o':'');c.textContent=v||'';
+    c.addEventListener('click',function(){tttMove(i);});grid.appendChild(c);
+  });
+}
+function tttWin(b){
+  var L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for(var i=0;i<L.length;i++){var l=L[i];if(b[l[0]]&&b[l[0]]===b[l[1]]&&b[l[0]]===b[l[2]])return b[l[0]];}
+  return b.every(function(x){return x;})?'draw':null;
+}
+function findBestMove(sym){
+  var L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for(var i=0;i<L.length;i++){var v=L[i].map(function(j){return tttB[j];});if(v.filter(function(x){return x===sym;}).length===2&&v.indexOf(null)>-1)return L[i][v.indexOf(null)];}
+  return null;
+}
+function tttMove(i){
+  if(tttOver||tttB[i])return;
+  tttB[i]='X';var w=tttWin(tttB);
+  if(!w){var m=findBestMove('O');if(m===null)m=findBestMove('X');if(m===null)m=tttB.indexOf(null);if(m!==null&&m>=0){tttB[m]='O';w=tttWin(tttB);}}
+  renderTTT();
+  if(w){tttOver=true;var msg=w==='draw'?'Draw! Great match!':w==='X'?'You won!':'EMO wins!';var em=w==='X'?'sad':w==='draw'?'curious':'happy';document.getElementById('tttSt').textContent=msg;speak(msg,em);}
+  EMO.lastInteract=Date.now();
+}
+function resetTTT(){tttB=new Array(9).fill(null);tttOver=false;document.getElementById('tttSt').textContent='Your turn (X)';renderTTT();}
+
+/* =====================================================
+   CHAT INPUT
+===================================================== */
+document.getElementById('chatSend').addEventListener('click',function(){sendChat();});
+document.getElementById('chatInput').addEventListener('keydown',function(e){if(e.key==='Enter')sendChat();});
+function sendChat(){
+  var v=document.getElementById('chatInput').value.trim();if(!v)return;
+  document.getElementById('chatInput').value='';
+  addBubble('user',v);
+  if(!EMO.awake)wakeUp();
+  sendToAI(v);
+  EMO.lastInteract=Date.now();
+}
+
+/* =====================================================
+   TIME
+===================================================== */
+function updateTime(){
+  var d=new Date();
+  var h=d.getHours().toString().padStart(2,'0');
+  var m=d.getMinutes().toString().padStart(2,'0');
+  document.getElementById('timeDisp').textContent=h+':'+m;
+}
+setInterval(updateTime,10000);
+
+/* =====================================================
+   PET BEHAVIOR
+===================================================== */
+var petMsgs=['Hey, are you still there? I miss you!','Want to learn something cool?','I know a great joke! Ask me!','Should we play a game together?','You are amazing! Keep it up!','Did you know I can show you holograms?'];
+var petIdx=0,lastPet=Date.now();
+function checkPet(){
+  if(EMO.awake&&Date.now()-EMO.lastInteract>40000&&Date.now()-lastPet>40000){
+    lastPet=Date.now();speak(petMsgs[petIdx%petMsgs.length],'curious');petIdx++;
+  }
+  if(!EMO.sleeping&&!EMO.faceDetected&&!EMO.awake&&Date.now()-lastPet>15000){
+    lastPet=Date.now();speak('Where are you? I am looking for you.','curious');
+  }
+}
+
+/* =====================================================
+   INIT
+===================================================== */
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    resize();
+    initTTS();initSTT();
+    loadProfile();
+    renderTTT();
+    updateTime();
+    setEmotion('calm');setStatus('idle');
+    requestAnimationFrame(drawEyes);
+    requestAnimationFrame(drawWave);
+    requestAnimationFrame(drawMoodWave);
+    requestAnimationFrame(drawFx);
+    requestAnimationFrame(holoLoop);
+    setInterval(checkPet,8000);
+    /* welcome */
+    setTimeout(function(){
+      if(!EMO.awake)speak('Hello! I am EMO, your AI robot companion. Say Hey EMO to wake me!','happy');
+    },2500);
+    /* clock tick unlock audio */
+    document.addEventListener('click',function(){getAC();},{ once:true });
+  },300);
+});
+
+/* tap to wake */
+document.getElementById('eyeStage').addEventListener('click',function(){
+  getAC();EMO.lastInteract=Date.now();
+  if(EMO.sleeping||!EMO.awake)wakeUp();else resetSleep();
+});
+</script>
+</body>
+</html>
